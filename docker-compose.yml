@@ -1,0 +1,53 @@
+version: '3'
+services:
+  BDsql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USERNAME: root
+      MYSQL_DATABASE: test
+    ports:
+      - "3306:3306"
+    networks:
+      - employee-mysql
+    volumes:
+      - mysql-data:/var/lib/mysql   # Agrega esta línea para el volumen
+
+  phpmyadmin:
+    container_name: phpmyadmin-container
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: BDsql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: password
+    ports:
+      - "8081:80"
+    depends_on:
+      - BDsql
+    networks:
+      - employee-mysql
+
+  myapp-main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - employee-mysql
+    restart: on-failure
+    depends_on:
+      - BDsql
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_HOST=BDsql
+      - DATABASE_USER=root
+      - DATABASE_PASSWORD=password
+      - DATABASE_NAME=test
+      - DATABASE_PORT=3306
+
+networks:
+  employee-mysql:
+
+volumes:
+  mysql-data:   # Define el volumen llamado "mysql-data"
